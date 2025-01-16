@@ -1,0 +1,52 @@
+---
+title: "DGE_scRNAseq"
+format: html
+editor: visual
+---
+
+## DGE scRNAseq:
+
+```{r}
+library("DESeq2")
+```
+
+```{r}
+counts <- read.csv("count_matrix_RRRM2_Femur_BM_GC_LAR_YNG_GY4_Gene.csv", row.names = 1,header = TRUE)
+metadata <- read.csv("metadata_RRRM2_Femur_BM_GC_LAR_YNG_GY4_Gene.csv", row.names = 1)
+```
+
+Create deseqdata set:
+
+```{r}
+all(rownames(metadata) %in% colnames(counts))  # Should return TRUE
+all(colnames(counts) %in% rownames(metadata))  # Should return TRUE
+```
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                              colData = metadata,
+                              design = ~ scoreCT)
+```
+
+```{r}
+# Run DESeq2 analysis
+dds <- DESeq(dds)
+```
+
+```{r}
+# Get results for a specific contrast (e.g., T cells vs B cells)
+res <- results(dds, contrast = c("scoreCT", "T cell", "B cell"))
+
+```
+
+```{r}
+# Save results
+write.csv(as.data.frame(res), file = "DESeq2_results.csv")
+```
+
+```{r}
+# Visualization
+plotMA(res, main = "MA-plot", ylim = c(-2, 2))
+rld <- rlog(dds)
+plotPCA(rld, intgroup = "scoreCT")
+```
